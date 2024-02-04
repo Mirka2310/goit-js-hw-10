@@ -11,16 +11,16 @@ const minutesData = document.querySelector('[data-minutes]');
 const secondsData = document.querySelector('[data-seconds]');
 const timer = document.querySelector('.timer');
 
-let selectedDateTime;
+let userSelectedDate;
 
-const flatpickrOptions = {
+const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    selectedDateTime = selectedDates[0];
-    if (selectedDateTime < Date.now()) {
+    userSelectedDate = selectedDates[0];
+    if (userSelectedDate < Date.now()) {
       iziToast.error({
         message: 'Please choose a date in the future',
         position: 'topRight',
@@ -32,44 +32,55 @@ const flatpickrOptions = {
   },
 };
 
-let timerInterval;
+let countdownInterval;
 
 function startTimer() {
-  timerInterval = setInterval(updateTimer, 1000, selectedDateTime);
+  countdownInterval = setInterval(updateTimer, 1000, userSelectedDate);
 }
 
-function updateTimer(endDateTime) {
+function updateTimer(endDate) {
   const currentDate = new Date();
-  const remainingTime = endDateTime - currentDate;
-  const { days, hours, minutes, seconds } = convertMsToTime(remainingTime);
-  daysData.textContent = addLeadingZero(days);
-  hoursData.textContent = addLeadingZero(hours);
-  minutesData.textContent = addLeadingZero(minutes);
-  secondsData.textContent = addLeadingZero(seconds);
+  const remainingTime = endDate - currentDate;
+  const { days, hours, minutes, seconds } = convertMs(remainingTime);
+
+  if (!isNaN(days) && !isNaN(hours) && !isNaN(minutes) && !isNaN(seconds)) {
+    daysData.textContent = addLeadingZero(days);
+    hoursData.textContent = addLeadingZero(hours);
+    minutesData.textContent = addLeadingZero(minutes);
+    secondsData.textContent = addLeadingZero(seconds);
+  }
+
   if (remainingTime <= 0) {
     stopTimer();
   }
 }
 
 startButton.addEventListener('click', () => {
-  if (selectedDateTime) {
+  if (userSelectedDate) {
     startTimer();
+    inputData.disabled = true;
   }
 });
 
 function stopTimer() {
-  clearInterval(timerInterval);
-  daysData.textContent = '00';
-  hoursData.textContent = '00';
-  minutesData.textContent = '00';
-  secondsData.textContent = '00';
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+
+    daysData.textContent = '00';
+    hoursData.textContent = '00';
+    minutesData.textContent = '00';
+    secondsData.textContent = '00';
+
+    countdownInterval = null;
+    inputData.disabled = false;
+  }
 }
 
 function addLeadingZero(value) {
   return String(value).padStart(2, '0');
 }
 
-function convertMsToTime(ms) {
+function convertMs(ms) {
   const second = 1000;
   const minute = second * 60;
   const hour = minute * 60;
@@ -83,4 +94,4 @@ function convertMsToTime(ms) {
   return { days, hours, minutes, seconds };
 }
 
-flatpickr(inputData, flatpickrOptions);
+flatpickr(inputData, options);
